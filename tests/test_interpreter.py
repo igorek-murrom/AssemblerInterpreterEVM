@@ -87,6 +87,32 @@ class InterpreterTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assert_memory({"100": 7})
 
+    def test_negates_vector_examples_in_place(self):
+        """Сравнить дампы до и после вычисления для трёх векторов."""
+        vectors = {
+            "positive": [1, 2, 3, 4, 5, 6, 131071],
+            "negative": [-9, -1, -34, -128, -577, -12, -131071],
+            "mixed": [0, -14, 21, -338, 0, 57, -2],
+        }
+        for kind, values in vectors.items():
+            with self.subTest(vector=kind):
+                source = ROOT / "tests" / f"negate_vector_{kind}.csv"
+                program = source.read_text(encoding="utf-8")
+                setup = program.split("\n\n", maxsplit=1)[0]
+                addresses = map(str, range(99, 108))
+                before = dict(zip(addresses, [0, *values, 0]))
+                after = {address: -value for address, value in before.items()}
+
+                self.assemble_text(setup)
+                result = self.interpret(99, 107)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assert_memory(before)
+
+                self.assemble(source)
+                result = self.interpret(99, 107)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assert_memory(after)
+
     def test_reads_and_executes_words_in_shared_memory(self):
         self.assemble_text(
             "LOAD_CONST,100\nLOAD_CONST,0\nREAD_MEM,0\nWRITE_MEM,0\n"
