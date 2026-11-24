@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RUN = ROOT / "run.sh"
 COPY_ARRAY = ROOT / "tests" / "copy_array.csv"
+NEGATION = ROOT / "tests" / "negation.csv"
 
 
 class InterpreterTests(unittest.TestCase):
@@ -66,6 +67,26 @@ class InterpreterTests(unittest.TestCase):
             "104": 37, "105": 0, "106": 338, "107": 131071,
         })
 
+    def test_negation_program(self):
+        self.assemble(NEGATION)
+        result = self.interpret(200, 203)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_memory({"200": -37, "201": 0, "202": 37, "203": -131071})
+
+    def test_negation_uses_full_address_and_pops_one_value(self):
+        for address in (0, 262143):
+            with self.subTest(address=address):
+                self.assemble_text(
+                    f"LOAD_CONST,100\nLOAD_CONST,33\nNEG,{address}\n"
+                    "LOAD_CONST,7\nWRITE_MEM,0\n"
+                )
+                result = self.interpret(address, address)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assert_memory({str(address): -33})
+                result = self.interpret(100, 100)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assert_memory({"100": 7})
+
     def test_reads_and_executes_words_in_shared_memory(self):
         self.assemble_text(
             "LOAD_CONST,100\nLOAD_CONST,0\nREAD_MEM,0\nWRITE_MEM,0\n"
@@ -107,7 +128,7 @@ class InterpreterTests(unittest.TestCase):
             ("05 00 20", "адрес команды 0: старшие биты команды"),
             ("09 00 00", "адрес команды 0: недостаточно элементов стека"),
             ("05 00 00 01 00 00", "адрес команды 1: недостаточно элементов"),
-            ("17 24 00", "адрес команды 0: код операции 7 не исполняется"),
+            ("17 24 00", "адрес команды 0: недостаточно элементов стека"),
         ]
         previous_dump = "{}\n"
         self.dump.write_text(previous_dump, encoding="utf-8")

@@ -1,4 +1,4 @@
-"""Интерпретатор базовых команд учебной виртуальной машины, вариант 15."""
+"""Интерпретатор учебной виртуальной машины, вариант 15."""
 
 import argparse
 import json
@@ -9,6 +9,7 @@ from assembler import (
     COMMANDS,
     INSTRUCTION_SIZE,
     LOAD_CONST,
+    NEG,
     OPCODE_BITS,
     READ_MEM,
     WRITE_MEM,
@@ -49,7 +50,7 @@ def pop_address(stack: list[int], offset: int) -> int:
 def execute_instruction(
     instruction: Instruction, memory: dict[int, int], stack: list[int]
 ) -> None:
-    """Выполнить одну базовую команду над общей памятью и стеком."""
+    """Выполнить одну команду над общей памятью и стеком."""
     opcode, operand = instruction
     if opcode == LOAD_CONST:
         stack.append(operand)
@@ -60,8 +61,10 @@ def execute_instruction(
         value = stack.pop()
         address = pop_address(stack, operand)
         memory[address] = value
+    elif opcode == NEG:
+        memory[operand] = -stack.pop()
     else:
-        raise ExecutionError(f"код операции {opcode} не исполняется на этапе 3")
+        raise ExecutionError(f"неизвестный код операции {opcode}")
 
 
 def execute(program: bytes) -> dict[int, int]:
