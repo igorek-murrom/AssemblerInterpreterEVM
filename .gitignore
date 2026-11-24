@@ -1,0 +1,8 @@
+/условие.pdf
+/ИКБО-10-25-1.pdf
+
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.bin
