@@ -14,11 +14,16 @@ from typing import Iterable, NamedTuple
 FIELDS_PER_INSTRUCTION = 2
 OPCODE_BITS = 4
 INSTRUCTION_SIZE = 3
+BYTE_ORDER = "little"
+LOAD_CONST = 5
+READ_MEM = 9
+WRITE_MEM = 1
+NEG = 7
 COMMANDS = {
-    "LOAD_CONST": (5, 17),
-    "READ_MEM": (9, 13),
-    "WRITE_MEM": (1, 13),
-    "NEG": (7, 18),
+    "LOAD_CONST": (LOAD_CONST, 17),
+    "READ_MEM": (READ_MEM, 13),
+    "WRITE_MEM": (WRITE_MEM, 13),
+    "NEG": (NEG, 18),
 }
 
 
@@ -80,11 +85,11 @@ def assemble(lines: Iterable[str]) -> list[Instruction]:
 def encode_instruction(instruction: Instruction) -> bytes:
     """Упаковать проверенные поля команды в три байта."""
     word = instruction.a | (instruction.b << OPCODE_BITS)
-    return word.to_bytes(INSTRUCTION_SIZE, byteorder="little")
+    return word.to_bytes(INSTRUCTION_SIZE, byteorder=BYTE_ORDER)
 
 
 def write_binary(path: Path, data: bytes) -> None:
-    """Заменить выходной файл после полной записи машинного кода."""
+    """Записать байты и заменить выходной файл после полной записи."""
     temporary_file = NamedTemporaryFile(dir=path.parent, delete=False)
     temporary_path = Path(temporary_file.name)
     try:
